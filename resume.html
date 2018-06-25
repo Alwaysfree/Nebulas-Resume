@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=0.5, maximum-scale=0.5, minimum-scale=0.5, user-scalable=no">
+    <meta name="x5-fullscreen" content="true">
+    <meta name="full-screen" content="yes">
+    <title>Nebulas Resume</title>
+    <link href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    <style type="text/css">
+    body{
+        background-image: url("./img/snow.jpg");
+        background-size: 100%;
+    }
+    .container{
+        margin-top: 8%;
+    }
+    h2{
+      font-size: 40px;
+      text-shadow: 0 0 2px black;  
+      color: #333;
+    }
+    .msg_success p{
+        font-size: 20px;
+    }
+    li{
+        font-size: 17px;
+        font-weight: bold
+    }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="row">
+        <div class="content" style="margin-bottom: 30px">
+            <h2 class="text-center" style="margin-bottom: 30px">Nebulas Resume</h2>
+            <div class="input-group col-md-10  col-md-offset-1" style="margin-top:0px positon:relative">  
+                <input type="text" class="form-control" id="search_value" placeholder="请输入身份证号-版本号" / >  
+                <span class="input-group-btn">  
+                    <button class="btn btn-primary btn-search" id="search">查找</button>  
+                    <button class="btn btn-primary btn-search" style="margin-left:3px" id="add">添加</button>  
+                </span>  
+            </div> 
+        </div>
+
+        <div class="search_success col-md-offset-1 hide">
+            <div class="msg_success">
+                <p id="search_result"></p>
+                <p> <b>username:</b> <span id="search_name"></span></p> 
+                <p> <b>experence:</b></p> <p id="search_experience"></p>
+            </div>
+        </div>
+
+        <div class="search_faile col-md-offset-1 hide">
+            <hr>
+            <div style="font-size: 20px"><i>无此份简历,请输入其他关键词</i></div>
+        </div>
+
+        <form class="form-horizontal hide" id="resume_form">
+            <div class="form-group">
+                <label for="idCard" class="col-md-1 control-label">身份证</label>
+                <div class="col-md-11">
+                    <input class="form-control" id="idCard" placeholder="身份证号-版本号" required="">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="username" class="col-md-1 control-label">名字</label>
+                <div class="col-md-11">
+                    <input class="form-control" id="username" placeholder="真实名字" required="">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="experience" class="col-md-1 control-label">履历</label>
+                <div class="col-md-11">
+                    <textarea class="form-control" rows="3" id="experience"
+                     placeholder="项目经历。（换行时务必在句末加上<br>）" required=""></textarea>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="text-center">
+                    <button class="btn btn-default" id="push">确定</button>
+                    <button class="btn btn-default" id="esc">取消</button>
+                </div>
+            </div>
+        </form>
+
+        <div class="col-md-10  col-md-offset-1" style="margin-top: 60px">
+            <p><b>用户须知:</b></p>
+            <ol>
+                <li>使用星云简历之前请安装chrome插件的钱包<a target="_blank" href="https://github.com/ChengOrangeJu/WebExtensionWallet">WebExtensionWallet</a></li>
+                <li>添加个人简历时，身份证一栏填写身份证号，然后加上版本号，
+                比如第一次添加简历版本号为0，比如342636191008013428-0,
+                再次更新时版本号为1，比如342636191008013428-1，如此依次递增。</li>
+                <li>查找个人简历时，请搜索个人身份证号码-版本号，如342636191008013428-0。如果要搜索后续更新的简历，请增加版本号。查找成功后显示姓名为用户姓名+其星云链钱包地址，如小明n1oXdmwuo5jJRExnZR5rbceMEyzRsPeALgm，所以请用户尽量使用前后一致的星云链钱包地址，以避免查询结果混乱。</li>
+                <li>星云个人简历旨在消除简历造假问题，为招聘者和应聘者服务。如果有意见反馈请发送邮件到yangzhou1106@gmail.com。</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+    
+<script src="https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<script src="./lib/nebPay.js"></script>
+<script src="./lib/nebulas.js"></script>
+<script type="text/javascript">
+    "use strict";
+    var dappAddress = "n1fyffSvnHdBen7JNGxk9dpUAbJJaQReNFQ";
+    var nebulas = require("nebulas"),
+    Account = nebulas.Account,
+    neb = new nebulas.Neb();
+    neb.setRequest(new nebulas.HttpRequest("https://mainnet.nebulas.io"));
+
+    // 搜索功能
+    $("#search").click(function(){
+
+    var from = Account.NewAccount().getAddressString();
+    var value = "0";
+    var nonce = "0"
+    var gas_price = "1000000"
+    var gas_limit = "2000000"
+    var callFunction = "get";
+    var arg = $("#search_value").val()
+    var callArgs = JSON.stringify([arg]);  
+
+    var contract = { 
+        "function": callFunction,
+        "args": callArgs
+    }
+    neb.api.call(from,dappAddress,value,nonce,gas_price,gas_limit,contract).then(function (resp) {
+            search(resp)
+    }).catch(function (err) {
+        console.log("error:" + err.message)
+        })
+    })
+
+    //查找简历
+    function search(resp) {
+        var result = resp.result   
+        console.log("结果: " + JSON.stringify(result))
+        var resultString = JSON.stringify(result);
+        if(resultString.search("key") !== -1 && resultString.search("value") !== -1){
+            result = JSON.parse(result)
+            $(".search_success").removeClass("hide");
+            $("#resume_form").addClass("hide");
+            $(".search_faile").addClass("hide");
+            $("#search_experience").html(result.value);
+            $("#search_name").text(result.author);
+        }
+
+        if(resultString.search("null") !== -1){
+            $("#resume_form").addClass("hide");
+            $(".search_success").addClass("hide");
+            $(".search_faile").removeClass("hide");
+        }
+
+        if(resultString.search("error") !== -1){
+            $("#resume_form").addClass("hide");
+            $(".search_faile").addClass("hide");
+            $("#search_username").text("");
+            $(".search_success").removeClass("hide");
+        }
+    }
+
+     // 添加个人简历
+    $("#add").click(function() {
+        $(".search_success").addClass("hide");
+        $(".search_faile").addClass("hide");
+        $("#resume_form").removeClass("hide");
+    })
+
+    $("#esc").click(function() {
+        $("#resume_form").addClass("hide");
+    })
+
+    var NebPay = require("nebpay");     
+    var nebPay = new NebPay();
+    var serialNumber
+    var callbackUrl = NebPay.config.mainnetUrl;   
+    $("#push").click(function() {
+        var from = Account.NewAccount().getAddressString();
+        var to = dappAddress;
+        var value = "0";
+        var callFunction = "save"
+        var arg1 = $("#idCard").val();
+        var arg2 = $("#username").val();
+        var arg3 = $("#experience").val();
+
+        var callArgs = JSON.stringify([arg1,arg2,arg3]);
+        console.log(callArgs)
+        serialNumber = nebPay.call(to, value, callFunction, callArgs, {  
+            listener: Push,       //设置listener, 处理交易返回信息
+            callback: callbackUrl
+        });
+        intervalQuery = setInterval(function ( ) {
+            funcIntervalQuery();
+        }, 1000);
+    });
+
+    var intervalQuery
+    function funcIntervalQuery() {
+        var options = {
+            callback: callbackUrl
+        }
+        nebPay.queryPayInfo(serialNumber,options)  
+            .then(function (resp) {
+                console.log("tx result: " + resp)   //resp is a JSON string
+                var respObject = JSON.parse(resp)
+                if(respObject.code === 0){
+                    clearInterval(intervalQuery);
+                    alert(`set ${$("#idCard").val()} succeed!`);
+                }
+            })
+            .catch(function (err) {
+                console.log(err);
+            });
+    }
+    function Push(resp) {
+        console.log("response of push: " + JSON.stringify(resp))
+        var respString = JSON.stringify(resp);
+        if(respString.search("rejected by user") !== -1){
+            clearInterval(intervalQuery)
+            alert(respString)
+        }else if(respString.search("txhash") !== -1){
+            //alert("wait for tx result: " + resp.txhash)
+        }
+    }
+
+</script>
+</body>
+</html>
